@@ -1,6 +1,7 @@
-import { Router } from "Router";
+const Router = require('./Router');
 
-const fs = require('fs');
+import fs from 'fs';
+import { _route } from '../../types/_router';
 const { trim } = require('php-in-js/modules/string')
 const { call_user_func_array } = require('php-in-js/modules/functions');
 
@@ -83,7 +84,7 @@ module.exports = class Route
      * @param {*} res 
      * @returns 
      */
-    call(router : Router, path : {[key: string]: string}, req: any, res: any) : any {
+    call(router : _route.Router, path : {[key: string]: string}, req: any, res: any) : any {
         let params = this.#matches;
         params.push(...[req, res]);
 
@@ -98,7 +99,7 @@ module.exports = class Route
         }
 
         let method = parts.shift();
-        if (!method || typeof method == 'undefined' || method == null) {
+        if (method == undefined || typeof method == 'undefined' || method == null) {
             method = router.getDefaultMethod();
         }
         if (!fs.existsSync(`${path.CONTROLLER_DIR}/${controller}.js`)) {
