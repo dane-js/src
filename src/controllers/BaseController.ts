@@ -2,7 +2,7 @@ import express from 'express';
 import { _http } from '../../types/_http';
 const Request = require('../http/Request');
 const Response = require('../http/Response');
-
+const fs = require('fs');
 module.exports = class BaseController 
 {
     protected path : {[key: string]: string};
@@ -19,9 +19,19 @@ module.exports = class BaseController
         this.resquest = new Request(req)
         this.response = new Response(res)
         this.models = models
+
+        this.initPlugins()
     }
 
-    protected loadModel(modelName: string): void {
-
+    private initPlugins(): void {
+        const pluginsConfig : {[key: string]: boolean | any} = require(this.path.CONFIG_DIR + '/plugins')
+        for (let k in pluginsConfig) {
+            if (pluginsConfig[k] === true && fs.existsSync(this.path.PLUGIN_DIR + '/' + k)) {
+                const plugin = require(this.path.PLUGIN_DIR + '/' + k)
+                Object.defineProperties(this, {
+                    ['$' + k]: { get: function() { return plugin } }
+                });
+            }
+        }
     }
 }
