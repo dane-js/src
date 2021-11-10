@@ -1,4 +1,3 @@
-const { DataTypes, Sequelize, Op } = require('sequelize');
 const {ucfirst}= require('php-in-js/modules/string')
 
 const fs = require('fs');
@@ -6,9 +5,10 @@ const path = require('path');
 
 module.exports = class Db
 {
-    static #db : typeof Sequelize | null = null
+    static #db : any = null
+    static #sequelizeOptions : any = null
 
-    static #connect($path : {[key: string]: string}) : typeof Sequelize | boolean {
+    static #connect($path : {[key: string]: string}) : any | boolean {
         if (this.#db !== null) {
             return this.#db
         } 
@@ -17,17 +17,22 @@ module.exports = class Db
             return false
         }
 
+        const { DataTypes, Sequelize, Op } = require('sequelize');
+
         this.#db = new Sequelize(config.database, config.username, config.password, {
           host: config.hostname,
           dialect: config.dialect,
           logging: config.logging === true ? console.log : false
         })
+
+        this.#sequelizeOptions = { DataTypes, Sequelize, Op }
+
         return this.#db
     }
 
     static initialize($path : {[key: string]: string}) : {[key: string]: _db.BaseModel} {
         const models : {[key: string]: _db.BaseModel} = {};
-        const connection : typeof Sequelize | boolean = this.#connect($path)
+        const connection : any | boolean = this.#connect($path)
         if (connection === false) {
             return models
         }
@@ -50,8 +55,8 @@ module.exports = class Db
         });
         
         models.sequelize = connection;
-        models.Sequelize = Sequelize;
-        models.Op = Op
+        models.Sequelize = this.#sequelizeOptions.Sequelize;
+        models.Op = this.#sequelizeOptions.Op
 
         return models
     }
@@ -74,7 +79,7 @@ module.exports = class Db
 
     static #createModel($path : {[key: string]: string}, file : string) : _db.BaseModel {
         const m  = require(path.join($path.MODEL_DIR, file))
-        const model : _db.BaseModel = new m(DataTypes, Sequelize, Op);
+        const model : _db.BaseModel = new m(this.#sequelizeOptions.DataTypes, this.#sequelizeOptions.Sequelize, this.#sequelizeOptions.Op);
 
         file = file.replace('.js', '').replace(/Model$/i, '')
 
