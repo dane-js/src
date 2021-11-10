@@ -38,6 +38,14 @@
 */
 
 module.exports = {
+    /**
+     * Active l'utilisation de la base de données
+     */
+    enable: false,
+
+    /**
+     * Configuration de la base de données de developpement
+     */
     development: {
         hostname: "localhost",
         username: "root",
@@ -47,6 +55,9 @@ module.exports = {
         logging: true,
         sync: true,
     },
+    /**
+     * Configuration de la base de données de test
+     */
     test: {
         hostname: "localhost",
         username: "root",
@@ -56,6 +67,9 @@ module.exports = {
         logging: true, 
         sync: true
     },
+    /**
+     * Configuration de la base de données de production
+     */
     production: {
         hostname: "localhost",
         username: "root",

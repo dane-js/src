@@ -8,12 +8,14 @@ module.exports = class Db
 {
     static #db : typeof Sequelize | null = null
 
-    static #connect($path : {[key: string]: string}) : typeof Sequelize {
+    static #connect($path : {[key: string]: string}) : typeof Sequelize | boolean {
         if (this.#db !== null) {
             return this.#db
         } 
-        const env : string = process.env.NODE_ENV || 'development';
         const config = this.getConfig($path)
+        if (config.enabled === false) {
+            return false
+        }
 
         this.#db = new Sequelize(config.database, config.username, config.password, {
           host: config.hostname,
@@ -25,7 +27,10 @@ module.exports = class Db
 
     static initialize($path : {[key: string]: string}) : {[key: string]: _db.BaseModel} {
         const models : {[key: string]: _db.BaseModel} = {};
-        const connection = Db.#connect($path)
+        const connection : typeof Sequelize | boolean = this.#connect($path)
+        if (connection === false) {
+            return models
+        }
 
         fs.readdirSync($path.MODEL_DIR).filter((file : string) => {
             return (file.indexOf('.') !== 0) && (file.slice(-3) === '.js' && !file.startsWith('AppModel'));
@@ -52,6 +57,7 @@ module.exports = class Db
     }
 
     static getConfig($path : {[key: string]: string}) : {
+        enabled: boolean,
         database : string,
         password : string | null,
         username : string,
@@ -61,7 +67,9 @@ module.exports = class Db
 
         [key: string]: any
       } {
-        return require(path.join($path.CONFIG_DIR, '/database'))[process.env.NODE_ENV || 'development'];
+        const config = require(path.join($path.CONFIG_DIR, '/database'))
+          
+        return {enabled : config.enable || false, ...config[process.env.NODE_ENV || 'development'] }
     }
 
     static #createModel($path : {[key: string]: string}, file : string) : _db.BaseModel {
