@@ -35,12 +35,21 @@ module.exports = class Kernel {
 
         const { port, host } = require(`${this.#path.CONFIG_DIR}/env`)
         server.listen(port, host, async() => {
-            const config : {sync: boolean, [Key: string]: any} = Db.getConfig(this.#path)
-            if (config.sync) {
-                await models.sequelize.sync({ alter: true })
-            }
-
+            await this.sync(models)
             console.log(`Le serveur a demarré sur l\'hôte http://${host}:${port}`)
         })
+    }
+
+    async sync(models : { 
+        sequelize: any,
+        Op: any
+        [Key: string]: _db.BaseModel, 
+    }) {
+        const config : {sync: boolean, [Key: string]: any} = Db.getConfig(this.#path)
+        if (config.sync) {
+            if ('sequelize' in models) {
+                await models.sequelize.sync({ alter: true })
+            }
+        }
     }
 }
