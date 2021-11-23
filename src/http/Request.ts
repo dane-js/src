@@ -1,5 +1,6 @@
 import { Request as ExpressRequest } from 'express';
 const Message = require('./Message');
+const { completeAssign } = require('../utils/objects')
 
 module.exports = class Request extends Message {
 
@@ -18,7 +19,29 @@ module.exports = class Request extends Message {
      * @return {object}
      */
     public getCookieParams() : {[key: string] : any} {
-        return this._req.cookies?.name
+        return this._req.cookies || {};
+    }
+
+    /**
+     * 
+     * @param name 
+     * @returns 
+     */
+    public getCookies(name: string | Array<string>) : any {
+        const cookies : {[key: string] : any} = this.getCookieParams()
+
+        if (typeof name === 'string') {
+            return cookies[name] || null
+        }
+        const result : {[key: string]: any} = {}
+
+        name.forEach(key => {
+            if (cookies[key]) {
+                result[key] = cookies[key]
+            }
+        })
+        
+        return result
     }
 
     /**
@@ -27,8 +50,13 @@ module.exports = class Request extends Message {
      * @param {object} cookies Array of key/value pairs representing cookies.
      * @return static
      */
-    public withCookieParams(cookies : {[key: string]: any}[]): Request {
-        return this
+    public withCookieParams(cookies : {[key: string]: any}[]) : Request {
+        const clone : Request = completeAssign({}, this)
+        cookies.forEach(cookie => {
+            clone._res.cookie(cookie.name, cookie.value, cookie.options)
+        })
+      
+        return clone
     }
 
     /**

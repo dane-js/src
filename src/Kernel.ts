@@ -1,42 +1,62 @@
-import express from 'express';
+import express  from 'express';
+const cookieParser = require('cookie-parser')
 const http = require('http')
 
-const Dispatcher = require('./router/Dispatcher')
-const Db = require('./db/Db')
+import { _route } from "../types/_router";
 
+const Dispatcher = require('./router/Dispatcher')
+const Router = require('./router/Router')
+const Db = require('./db/Db')
+const fs = require('fs')
 module.exports = class Kernel {
  
-    #path : { [Key: string]: string } = {
+    #PATH : { [Key: string]: string } = {
         STATIC_DIR : '',
         CONFIG_DIR: ''
     }
 
     constructor(path: { [Key: string]: string}) {
-        this.#path = {...this.#path, ...path}
+        this.#PATH = {...this.#PATH, ...path}
     }
  
     init() {
-        const app = express()
+        const app : express.Application = express()
         const server = http.Server(app)
         const models : { 
             sequelize: any,
             Op: any
             [Key: string]: _db.BaseModel, 
-        } = Db.initialize(this.#path)
+        } = Db.initialize(this.#PATH)
 
-        const dispatcher = new Dispatcher(this.#path, models);
-
-        app.use('/static', express.static(this.#path.STATIC_DIR))
+        app.use(cookieParser())
+        app.use('/static', express.static(this.#PATH.STATIC_DIR))
         app.use(express.urlencoded({ extended: true }))
         app.use(express.json({ limit: '250mb' }))
-        app.use('/', function (req : express.Request, res : express.Response, next : Function) {
-            return dispatcher.dispatch(req, res, next)
-        })
-
-        const { port, host } = require(`${this.#path.CONFIG_DIR}/env`)
+        
+        this.#initializeApp(app, models)
+        
+        const { port, host } = require(`${this.#PATH.CONFIG_DIR}/env`)
         server.listen(port, host, async() => {
             await this.sync(models)
             console.log(`Le serveur a demarré sur l\'hôte http://${host}:${port}`)
+        })
+    }
+
+    #initializeApp(app : any, models : {[key: string]: _db.BaseModel}) {
+        const router : _route.Router = require(`${this.#PATH.CONFIG_DIR}/routes.js`)(new Router(this.#PATH))
+        const routes : {[key: string]: Array<_route.Route>} = router.getAllRoutes()
+        for (let key in routes) {
+            if (key == 'get') {
+                routes.get.forEach(route => {
+                    app.get(`/${route.getPath()}`, ...route.getMiddlewares(), function (req : express.Request, res : express.Response, next : Function) {
+                        return route.getRunner(models, req, res, next)
+                    })
+                })
+            }
+        }
+        const dispatcher : _route.Dispatcher = new Dispatcher(this.#PATH, models);
+        app.use(function (req : express.Request, res : express.Response, next : Function) {
+            return dispatcher.dispatch(req, res, next)
         })
     }
 
@@ -45,7 +65,7 @@ module.exports = class Kernel {
         Op: any
         [Key: string]: _db.BaseModel, 
     }) {
-        const config : {sync: boolean, [Key: string]: any} = Db.getConfig(this.#path)
+        const config : {sync: boolean, [Key: string]: any} = Db.getConfig(this.#PATH)
         if (config.sync) {
             if ('sequelize' in models) {
                 await models.sequelize.sync({ alter: true })

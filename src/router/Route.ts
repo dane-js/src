@@ -1,10 +1,10 @@
-const Router = require('./Router');
-
+import express, {Request, Response, Application} from 'express';
 import fs from 'fs';
+import { _controller } from '../../types/_controller';
 import { _route } from '../../types/_router';
 const { trim } = require('php-in-js/modules/string')
 const { call_user_func_array } = require('php-in-js/modules/functions');
-
+const launcher = require('./launcher')
 module.exports = class Route
 {
     /**
@@ -22,15 +22,24 @@ module.exports = class Route
      */
     #matches : Array<string> = [];
 
+    #PATH : {[key: string]: string} = {};
+
     /**
      * @var {Object}
      */
     #params : {[key: string]: any} = {};
+    #middlewares: Array<Function> = [];
 
 
-    constructor(path : string, callable : string | Function) {
+    constructor(path : string, callable : string | Function, middlewares : string | Function | Array<string|Function>) {
         this.path = trim(path, '/')
         this.callable = callable
+        this.#middlewares = this.#makeMiddlewares(middlewares)
+    }
+    setPATH(path : {[key: string]: string}) : this {
+        this.#PATH = path
+
+        return this
     }
 
     /**
@@ -43,6 +52,10 @@ module.exports = class Route
         this.#params = {...this.#params, ...{ [param]: regex.replace('(', '(?:') }};
 
         return this;
+    }
+
+    getPath() : string {
+        return this.path
     }
 
     /**
@@ -84,10 +97,26 @@ module.exports = class Route
      * @param {*} res 
      * @returns 
      */
-    call(router : _route.Router, path : {[key: string]: string}, req: any, res: any) : any {
-        let params = this.#matches;
-        params.push(...[req, res]);
+    call(router : _route.Router, path : {[key: string]: string}, app : express.Application | undefined, reqe: Request, rese: any) : any {
+        return this.#runApp(router, path, reqe, rese)
+        /* 
+        const middlewares =  this.getMiddlewares()
+        if (!middlewares.length ) {
+        }
+        if (app) {
+            middlewares.forEach(middleware => {
+                app.use(middleware)
+            })
+            app.use((req :any, res :any) => {
+                return this.#runApp(router, path, req, res)
+            })
+        } */
+    }
 
+    #runApp(router : _route.Router, path : {[key: string]: string}, req : any, res : any) : any { 
+        let params = this.#matches;
+        
+        params.push(...[req, res]);
         if (this.callable instanceof Function) {
             return call_user_func_array(this.callable, params);
         }
@@ -103,7 +132,7 @@ module.exports = class Route
             method = router.getDefaultMethod();
         }
         if (!fs.existsSync(`${path.CONTROLLER_DIR}/${controller}.js`)) {
-           throw Error('Controller file "'+controller+'.js" do not exist')
+        throw Error('Controller file "'+controller+'.js" do not exist')
         }
     
         const classe = require(`${path.CONTROLLER_DIR}/${controller}`)
@@ -113,6 +142,61 @@ module.exports = class Route
             throw Error(`Methode "${method}" non definie dans le controleur ${controller}`)
         }
         return call_user_func_array([obj, method], params)        
+    }
+
+    use(middlewares : string | Function | Array<string|Function>) : this {
+        this.#middlewares.push(...this.#makeMiddlewares(middlewares))
+
+        return this
+    }
+
+    #makeMiddlewares(middlewares : string | Function | Array<string|Function>) : Array<Function> {
+        if (middlewares == null || middlewares === undefined || typeof middlewares == 'undefined') {
+			return []
+		}
+        if (typeof middlewares =='function') {
+            return [middlewares]        
+        }
+        if (typeof middlewares == 'string') {
+            if (fs.existsSync(`${this.#PATH.MIDDLEWARE_DIR}/${middlewares}.js`)) {
+                const middleware : Function = require(`${this.#PATH.MIDDLEWARE_DIR}/${middlewares}.js`)
+                return [middleware]
+            }
+            return []
+        }
+        const result : Array<Function> = []
+        
+        middlewares.forEach(middleware => {
+            if (typeof middleware == 'function') {
+                result.push(middleware)
+            }
+            else if (fs.existsSync(`${this.#PATH.MIDDLEWARE_DIR}/${middleware}.js`)) {
+                const middle : Function = require(`${this.#PATH.MIDDLEWARE_DIR}/${middleware}.js`)
+                result.push(middle)
+            }
+        })
+        
+        return result
+    }
+
+    getMiddlewares() : Array<Function> {
+        return this.#middlewares
+    }
+
+    getRunner(models : {[key: string]: _db.BaseModel}, req : any, res : any, next : any) : any {
+        return this.#launch(models, req, res)
+    }
+
+
+    #launch(models : {[key: string]: _db.BaseModel}, req : any, res : any) : Function {
+        let params = this.#matches;
+        
+        params.push(...[req, res]);
+        if (this.callable instanceof Function) {
+            return call_user_func_array(this.callable, [req, res]);
+        }
+
+        return launcher(this.callable.split('@'), req, res, this.#PATH, models)
     }
 
     /**
