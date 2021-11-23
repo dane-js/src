@@ -1,13 +1,13 @@
 import express  from 'express';
 const cookieParser = require('cookie-parser')
 const http = require('http')
+const cors = require('cors')
 
 import { _route } from "../types/_router";
 
 const Dispatcher = require('./router/Dispatcher')
 const Router = require('./router/Router')
 const Db = require('./db/Db')
-const fs = require('fs')
 module.exports = class Kernel {
  
     #PATH : { [Key: string]: string } = {
@@ -28,6 +28,9 @@ module.exports = class Kernel {
             [Key: string]: _db.BaseModel, 
         } = Db.initialize(this.#PATH)
 
+        const corsOptions = require(`${this.#PATH.CONFIG_DIR}/cors`)
+        app.use(cors(corsOptions))
+
         app.use(cookieParser())
         app.use('/static', express.static(this.#PATH.STATIC_DIR))
         app.use(express.urlencoded({ extended: true }))
@@ -46,13 +49,27 @@ module.exports = class Kernel {
         const router : _route.Router = require(`${this.#PATH.CONFIG_DIR}/routes.js`)(new Router(this.#PATH))
         const routes : {[key: string]: Array<_route.Route>} = router.getAllRoutes()
         for (let key in routes) {
-            if (key == 'get') {
-                routes.get.forEach(route => {
-                    app.get(`/${route.getPath()}`, ...route.getMiddlewares(), function (req : express.Request, res : express.Response, next : Function) {
-                        return route.getRunner(models, req, res, next)
-                    })
-                })
-            }
+            routes[key].forEach(route => {
+                const middlewares : Function[] = route.getMiddlewares()
+                const runner : Function = function (req : express.Request, res : express.Response, next : Function) {
+                    return route.getRunner(models, req, res, next)
+                }
+                if (key == 'delete') {
+                    app.delete(`/${route.getPath()}`, ...middlewares, runner)
+                }
+                if (key == 'get') {
+                    app.get(`/${route.getPath()}`, ...middlewares, runner)
+                }
+                if (key == 'head') {
+                    app.head(`/${route.getPath()}`, ...middlewares, runner)
+                }
+                if (key == 'post') {
+                    app.post(`/${route.getPath()}`, ...middlewares, runner)
+                }
+                if (key == 'put') {
+                    app.put(`/${route.getPath()}`, ...middlewares, runner)
+                }
+            })
         }
         const dispatcher : _route.Dispatcher = new Dispatcher(this.#PATH, models);
         app.use(function (req : express.Request, res : express.Response, next : Function) {
