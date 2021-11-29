@@ -28,8 +28,9 @@ module.exports = class BaseModel
       return this.tableName; 
     }
 
-    static associate(models : {[key: string]: BaseModel}) : void {
+    associate(models : {[key: string]: BaseModel}) : {[key: string]: BaseModel} {
 
+        return models
     }
 
     constructor(types : {[key: string]: any}, sequelize : {[key: string]: any}, op : {[key: string]: any}) {

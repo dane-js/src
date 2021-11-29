@@ -14,7 +14,7 @@ declare namespace _db {
         setTableName(tableName: string) : this
 
         constructor(types : {[key: string]: any}, sequelize : {[key: string]: any}, op : {[key: string]: any})
-        associate(models : {[key: string]: BaseModel}) : void
+        associate(models : {[key: string]: BaseModel}) : {[key: string]: BaseModel}
         make(connection : {[key: string]: any}) : any
     }
 

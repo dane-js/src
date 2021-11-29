@@ -31,7 +31,9 @@ module.exports = class Db
     }
 
     static initialize($path : {[key: string]: string}) : {[key: string]: _db.BaseModel} {
-        const models : {[key: string]: _db.BaseModel} = {};
+        let models : {[key: string]: _db.BaseModel} = {};
+        const trueModels : {[key: string]: _db.BaseModel} = {};
+        
         const connection : any | boolean = this.#connect($path)
         if (connection === false) {
             return models
@@ -45,15 +47,13 @@ module.exports = class Db
             const name = model.getModelName();
             if (name) {
                 models[name] = model.make(connection);
+                trueModels[name] = model
             }
         });
+        Object.keys(models).forEach(name => {
+            models = {...models, ...trueModels[name].associate(models)}
+        })
 
-        Object.keys(models).forEach(modelName => {
-            if ('associate' in models[modelName]) {
-                models[modelName].associate(models);
-            }
-        });
-        
         models.sequelize = connection;
         models.Sequelize = this.#sequelizeOptions.Sequelize;
         models.Op = this.#sequelizeOptions.Op
