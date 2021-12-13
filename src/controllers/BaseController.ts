@@ -3,10 +3,10 @@ import { _http } from '../../types/_http';
 const Request = require('../http/Request');
 const Response = require('../http/Response');
 const fs = require('fs');
-const { in_array } = require('php-in-js/modules/array')
-const { ucfirst } = require('php-in-js/modules/string')
+const pij = require('php-in-js/cjs')
 module.exports = class BaseController 
 {
+    protected pij : {[key: string]: any} = pij
     protected path : {[key: string]: string};
 
     protected request: _http.Request | null = null
@@ -41,9 +41,9 @@ module.exports = class BaseController
     #initDb(models : {[key: string]: _db.BaseModel}): void {
         this.db = models
         for (let k in models) {
-            if (!in_array(k, ['sequelize', 'Sequelize', 'Op', 'DataTypes'])) {
+            if (!this.pij.in_array(k, ['sequelize', 'Sequelize', 'Op', 'DataTypes'])) {
                 Object.defineProperties(this, {
-                    [`${ucfirst(k)}Model`]: { get: function() { return models[k] } }
+                    [`${this.pij.ucfirst(k)}Model`]: { get: function() { return models[k] } }
                 });
             }
         }
