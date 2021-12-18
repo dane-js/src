@@ -29,11 +29,23 @@ module.exports = class BaseController
     #initPlugins(): void {
         const pluginsConfig : {[key: string]: boolean | any} = require(this.path.CONFIG_DIR + '/plugins')
         for (let k in pluginsConfig) {
-            if (pluginsConfig[k] === true && fs.existsSync(`${this.path.PLUGIN_DIR}/${k}.js`)) {
-                const plugin = require(`${this.path.PLUGIN_DIR}/${k}.js`)
-                Object.defineProperties(this, {
-                    ['$' + k]: { get: function() { return plugin } }
-                });
+            if (pluginsConfig[k] == true) {
+                let pluginFile = `${this.path.PLUGIN_DIR}/${k}.js`;
+                const pluginConfigFile = `${this.path.CONFIG_DIR}/plugin.${k}.js`;
+
+                if (!fs.existsSync(pluginFile)) {
+                    pluginFile = `${__dirname}/../plugins/${k}.js`;
+                }
+                if (fs.existsSync(pluginFile)) {
+                    let pluginConfig = {};
+                    if (fs.existsSync(pluginConfigFile)) {
+                        pluginConfig = require(pluginConfigFile);
+                    }
+                    const plugin = require(pluginFile);
+                    Object.defineProperties(this, {
+                        ['$' + k]: { get: function() { return plugin({...pluginConfig, path: this.path}) } }
+                    });
+                }
             }
         }
     }
