@@ -1,3 +1,5 @@
+import { _base } from "../../types/_base";
+
 const {ucfirst}= require('php-in-js/modules/string')
 
 const fs = require('fs');
@@ -30,7 +32,7 @@ module.exports = class Db
         return this.#db
     }
 
-    static initialize($path : {[key: string]: string}) : {[key: string]: _db.BaseModel} {
+    static initialize($path : _base.PATH) : {[key: string]: _db.BaseModel} {
         let models : {[key: string]: _db.BaseModel} = {};
         const trueModels : {[key: string]: _db.BaseModel} = {};
         
@@ -39,17 +41,20 @@ module.exports = class Db
             return models
         }
 
-        fs.readdirSync($path.MODEL_DIR).filter((file : string) => {
-            return (file.indexOf('.') !== 0) && (file.slice(-3) === '.js' && !file.startsWith('AppModel'));
-        })
-        .forEach((file : string) => {
-            const model : _db.BaseModel = this.#createModel($path, file)
-            const name = model.getModelName();
-            if (name) {
-                models[name] = model.make(connection);
-                trueModels[name] = model
-            }
-        });
+        if (fs.existsSync($path.MODEL_DIR)) {
+            fs.readdirSync($path.MODEL_DIR).filter((file : string) => {
+                return (file.indexOf('.') !== 0) && (file.slice(-3) === '.js' && !file.startsWith('AppModel'));
+            })
+            .forEach((file : string) => {
+                const model : _db.BaseModel = this.#createModel($path, file)
+                const name = model.getModelName();
+                if (name) {
+                    models[name] = model.make(connection);
+                    trueModels[name] = model
+                }
+            });
+        }
+        
         Object.keys(models).forEach(name => {
             models = {...models, ...trueModels[name].associate(models)}
         })

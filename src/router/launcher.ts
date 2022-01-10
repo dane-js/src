@@ -1,13 +1,14 @@
 import express from 'express';
+import { _base } from '../../types/_base';
 import { _controller } from '../../types/_controller';
 import { _route } from '../../types/_router';
 
 const fs = require('fs');
 const { call_user_func_array } = require('php-in-js/modules/functions');
-const { trim, ucfirst } = require('php-in-js/modules/string');
+const { ucfirst } = require('php-in-js/modules/string');
 const { empty } = require('php-in-js/modules/types');
 
-module.exports = (parts : Array<string>, req: express.Request, res: express.Response, path: {[key: string]: string}, models : {[key: string]: _db.BaseModel}, router : _route.Router) => {
+module.exports = (parts : Array<string>, req: express.Request, res: express.Response, path: _base.PATH, models : {[key: string]: _db.BaseModel}, router : _route.Router) => {
     let controller : string | undefined = parts.shift();
     if (controller?.toLowerCase() !== 'favicon.ico') {
         if (empty(controller)) {

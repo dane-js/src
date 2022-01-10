@@ -4,18 +4,25 @@ const http = require('http')
 const cors = require('cors')
 
 import { _route } from "../types/_router";
+import { _base } from "../types/_base";
 
 const Dispatcher = require('./router/Dispatcher')
 const Router = require('./router/Router')
 const Db = require('./db/Db')
 module.exports = class Kernel {
  
-    #PATH : { [Key: string]: string } = {
-        STATIC_DIR : '',
-        CONFIG_DIR: ''
+    #PATH : _base.PATH = {
+        STATIC_DIR     : '',
+        CONFIG_DIR     : '',
+        CONTROLLER_DIR : '',
+        MIDDLEWARES_DIR: '',
+        MODEL_DIR      : '',
+        PLUGIN_DIR     : '',
+        REPOSITORY_DIR : '',
+        VIEW_DIR       : '',
     }
 
-    constructor(path: { [Key: string]: string}) {
+    constructor(path: _base.PATH) {
         this.#PATH = {...this.#PATH, ...path}
     }
  

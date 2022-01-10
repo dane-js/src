@@ -1,29 +1,38 @@
 import express from 'express';
+import { _base } from '../../types/_base';
 import { _http } from '../../types/_http';
 const Request = require('../http/Request');
 const Response = require('../http/Response');
 const fs = require('fs');
 const pij = require('php-in-js/cjs')
+const _path = require('path');
+
 module.exports = class BaseController 
 {
     protected pij : {[key: string]: any} = pij
-    protected path : {[key: string]: string};
+    protected path : _base.PATH;
 
     protected request: _http.Request | null = null
     protected response: _http.Response | null = null
     
     protected db : {[key: string]: _db.BaseModel} = {}
+    protected repo : {[key: string]: _db.BaseRepository} = {}
 
-    constructor(path: {[key: string]: string}) {
+    constructor(path: _base.PATH) {
         this.path = path
     }
 
-    public initialize(req : express.Request, res : express.Response, models : {[key: string]: _db.BaseModel}): void {
+    public initialize(
+        req : express.Request, 
+        res : express.Response, 
+        models : {[key: string]: _db.BaseModel}
+    ): void {
         this.request = new Request(req, res)
         this.response = new Response(req, res)
         
         this.#initDb(models)
         this.#initPlugins()
+        this.#initRepo()
     }
 
     #initPlugins(): void {
@@ -59,5 +68,42 @@ module.exports = class BaseController
                 });
             }
         }
+    }
+
+    #initRepo(): void {
+        let repositories : {[key: string]: _db.BaseRepository} = {};
+
+        if (fs.existsSync(this.path.REPOSITORY_DIR)) {
+            fs.readdirSync(this.path.REPOSITORY_DIR).filter((file : string) => {
+                return (file.indexOf('.') !== 0) && (file.slice(-3) === '.js' && !file.startsWith('AppRepository'));
+            })
+            .forEach((file : string) => {
+                const repo : _db.BaseRepository = this.#createRepository(file)
+                const name = repo.getRepoName();
+                if (name) {
+                    repositories[name] = repo;
+                }
+            });
+        }
+        
+        this.repo = repositories
+        for (let k in repositories) {
+            Object.defineProperties(this, {
+                [`${this.pij.ucfirst(k)}Repo`]: { get: function() { return repositories[k] } }
+            });
+        }
+    }
+
+    #createRepository(file : string) : _db.BaseRepository {
+        const r  = require(_path.join(this.path.REPOSITORY_DIR, file))
+        const repo : _db.BaseRepository = new r(this.db);
+
+        file = file.replace('.js', '').replace(/Repository$/i, '')
+
+        if (null == repo.getRepoName()) {
+            repo.setRepoName(this.pij.ucfirst(file));
+        }
+        
+        return repo.initializeModel();
     }
 }

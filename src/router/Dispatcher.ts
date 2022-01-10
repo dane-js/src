@@ -1,4 +1,5 @@
 import express from 'express';
+import { _base } from '../../types/_base';
 import { _controller } from '../../types/_controller';
 import { _route } from '../../types/_router';
 const { trim } = require('php-in-js/modules/string');
@@ -15,10 +16,10 @@ module.exports = class Dispatcher {
     /**
      * @var {object}
      */
-    #path: { [key: string]: string; };
+    #path: _base.PATH;
     #models: { [key: string]: _db.BaseModel; };
     
-    constructor(path : {[key: string]: string}, models : {[key: string]: _db.BaseModel}) {
+    constructor(path : _base.PATH, models : {[key: string]: _db.BaseModel}) {
         this.#router = require(`${path.CONFIG_DIR}/routes`)(new Router)
         this.#path = path
         this.#models = models
