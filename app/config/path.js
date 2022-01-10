@@ -4,6 +4,6 @@ module.exports = {
 	MIDDLEWARES_DIR: `${__dirname}/../middlewares`,
     MODEL_DIR: `${__dirname}/../models`,
     PLUGIN_DIR: `${__dirname}/../plugins`,
-    STATIC_DIR: `${__dirname}/../../static`,
-    VIEW_DIR: `${__dirname}/../../views`,
+    STATIC_DIR: `${__dirname}/../static`,
+    VIEW_DIR: `${__dirname}/../views`,
 }
