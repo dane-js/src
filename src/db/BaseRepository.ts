@@ -35,7 +35,7 @@ module.exports = class BaseRepository
      * @param {object} where 
      * @return {boolean} 
      */
-    async exists(where: {[key: string]: any}) : Promise<boolean> {
+    async exist(where: {[key: string]: any}) : Promise<boolean> {
         return await this.model.count({where}) > 0;
     }
 }
