@@ -58,8 +58,8 @@ module.exports = class Message {
      *     key MUST be a header name, and each value MUST be an array of strings
      *     for that header.
      */
-    public getHeaders() : Array<Array<any>> {
-        return []
+    public getHeaders() : {[key: string]: any}{
+        return this._req.headers;
     }
 
     /**
@@ -83,7 +83,16 @@ module.exports = class Message {
      *    return an empty array.
      */
     public getHeader(name : string) : string[] {
-        return [name];
+        const headers = this.getHeaders();
+        name = name.toLowerCase();
+        const header = headers[name];
+        if (!header) {
+            return [];
+        }
+        if (typeof header === 'string') {
+            return [header];
+        }
+        return header;
     }
 
     /**
@@ -95,7 +104,7 @@ module.exports = class Message {
      *    the message, this method MUST return an empty string.
      */
     public getHeaderLine(name : string) : string {
-        return name
+        return this.getHeader(name).join(', ');
     }
 
     /**
