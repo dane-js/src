@@ -139,8 +139,8 @@ module.exports = class Request extends Message {
      * @param {any} $default Default value to return if the attribute does not exist.
      * @return {any}
      */
-    public getAttribute(name : string, defaut : any) : any {
-
+    public getAttribute(name : string, defaut : any = null) : any {
+        return this._req[name] || defaut
     }
 
     /**
@@ -159,7 +159,7 @@ module.exports = class Request extends Message {
      * @return static
      */
     public withAttribute(name : string, value : any) : Request {
-
+        this._req[name] = value;
         return this
     }
 
