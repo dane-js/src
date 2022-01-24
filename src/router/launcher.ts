@@ -29,6 +29,7 @@ module.exports = (parts : Array<string>, req: express.Request, res: express.Resp
         if (empty(method)) {
             method = 'index'
         }
+        method = method!.replace(/-/g, '_')
 
         if (!fs.existsSync(`${path.CONTROLLER_DIR}/${controller}.js`)) {
             throw Error(`Controller file "${path.CONTROLLER_DIR}/${controller}.js" do not exist`);
