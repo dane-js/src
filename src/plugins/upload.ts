@@ -19,10 +19,11 @@ module.exports = function(config : { [key: string]: any }) {
             name = Str.generateKey(32).toLowerCase()
         }
         try {
+            const baseUrl = config.baseUrl || (require(`${config.path.CONFIG_DIR}/env`)).baseUrl
             const filepath : string = imgSync(data, `${config.path.STATIC_DIR}/${folder}`, name),
                 pathArr = filepath.split(/(\/|\\)/g)
                 
-            return `${config.baseUrl}/static/${folder}/${pathArr[pathArr.length - 1]}`
+            return `${baseUrl}/static/${folder}/${pathArr[pathArr.length - 1]}`
         }
         catch(error) {
             return ''
