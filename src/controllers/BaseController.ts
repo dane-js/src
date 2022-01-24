@@ -22,11 +22,11 @@ module.exports = class BaseController
         this.path = path
     }
 
-    public initialize(
+    public async initialize(
         req : express.Request, 
         res : express.Response, 
         models : {[key: string]: _db.BaseModel}
-    ): void {
+    ): Promise<void> {
         this.request = new Request(req, res)
         this.response = new Response(req, res)
         

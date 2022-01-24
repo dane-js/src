@@ -5,7 +5,7 @@ declare namespace _controller {
         protected request : _http.Request | null
         protected response : _http.Response | null
         constructor(path: {[key: string]: string})
-        public initialize(req : ExpressRequest, res : ExpressResponse, models : {[key: string]: _db.BaseModel})
+        public initialize(req : ExpressRequest, res : ExpressResponse, models : {[key: string]: _db.BaseModel}) : Promise<void>
     }
 
     class RestfullController extends BaseController {

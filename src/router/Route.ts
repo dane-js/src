@@ -34,7 +34,7 @@ module.exports = class Route
     constructor(path : string, callable : string | Function, middlewares : string | Function | Array<string|Function>) {
         this.path = trim(path, '/')
         this.callable = callable
-        this.#middlewares = this.#makeMiddlewares(middlewares)
+        this.#middlewares = Route.makeMiddlewares(this.#PATH, middlewares)
     }
     setPATH(path : {[key: string]: string}) : this {
         this.#PATH = path
@@ -145,12 +145,12 @@ module.exports = class Route
     }
 
     use(middlewares : string | Function | Array<string|Function>) : this {
-        this.#middlewares.push(...this.#makeMiddlewares(middlewares))
+        this.#middlewares.push(...Route.makeMiddlewares(this.#PATH, middlewares))
 
         return this
     }
 
-    #makeMiddlewares(middlewares : string | Function | Array<string|Function>) : Array<Function> {
+    static makeMiddlewares($path : {[key: string] : string}, middlewares : string | Function | Array<string|Function>) : Array<Function> {
         if (middlewares == null || middlewares === undefined || typeof middlewares == 'undefined') {
 			return []
 		}
@@ -158,8 +158,8 @@ module.exports = class Route
             return [middlewares]        
         }
         if (typeof middlewares == 'string') {
-            if (fs.existsSync(`${this.#PATH.MIDDLEWARE_DIR}/${middlewares}.js`)) {
-                const middleware : Function = require(`${this.#PATH.MIDDLEWARE_DIR}/${middlewares}.js`)
+            if (fs.existsSync(`${$path.MIDDLEWARE_DIR}/${middlewares}.js`)) {
+                const middleware : Function = require(`${$path.MIDDLEWARE_DIR}/${middlewares}.js`)
                 return [middleware]
             }
             return []
@@ -170,8 +170,8 @@ module.exports = class Route
             if (typeof middleware == 'function') {
                 result.push(middleware)
             }
-            else if (fs.existsSync(`${this.#PATH.MIDDLEWARE_DIR}/${middleware}.js`)) {
-                const middle : Function = require(`${this.#PATH.MIDDLEWARE_DIR}/${middleware}.js`)
+            else if (fs.existsSync(`${$path.MIDDLEWARE_DIR}/${middleware}.js`)) {
+                const middle : Function = require(`${$path.MIDDLEWARE_DIR}/${middleware}.js`)
                 result.push(middle)
             }
         })

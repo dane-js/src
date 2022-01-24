@@ -8,7 +8,7 @@ const { call_user_func_array } = require('php-in-js/modules/functions');
 const { ucfirst } = require('php-in-js/modules/string');
 const { empty } = require('php-in-js/modules/types');
 
-module.exports = (parts : Array<string>, req: express.Request, res: express.Response, path: _base.PATH, models : {[key: string]: _db.BaseModel}, router : _route.Router) => {
+module.exports = async (parts : Array<string>, req: express.Request, res: express.Response, path: _base.PATH, models : {[key: string]: _db.BaseModel}, router : _route.Router) => {
     let controller : string | undefined = parts.shift();
     if (controller?.toLowerCase() !== 'favicon.ico') {
         if (empty(controller)) {
@@ -39,7 +39,7 @@ module.exports = (parts : Array<string>, req: express.Request, res: express.Resp
         const classe = require(`${path.CONTROLLER_DIR}/${controller}`)
 
         const obj : _controller.BaseController = new classe(path)
-        obj.initialize(req, res, models);
+        await obj.initialize(req, res, models);
 
         if (!method || !(method in obj)) {
             throw Error(`Methode "${method}" non definie dans le controleur ${controller}`)

@@ -8,6 +8,7 @@ import { _base } from "../types/_base";
 
 const Dispatcher = require('./router/Dispatcher')
 const Router = require('./router/Router')
+const Route = require('./router/Route')
 const Db = require('./db/Db')
 module.exports = class Kernel {
  
@@ -53,6 +54,9 @@ module.exports = class Kernel {
     }
 
     #initializeApp(app : any, models : {[key: string]: _db.BaseModel}) {
+        const app_middlewares : Array<Function|string> = require(`${this.#PATH.CONFIG_DIR}/middlewares.js`)([])
+        app.use(...Route.makeMiddlewares(this.#PATH, app_middlewares))
+
         const router : _route.Router = require(`${this.#PATH.CONFIG_DIR}/routes.js`)(new Router(this.#PATH))
         const routes : {[key: string]: Array<_route.Route>} = router.getAllRoutes()
         for (let key in routes) {
