@@ -75,7 +75,37 @@ module.exports = class Request extends Message {
      * @return static
      */
     public withQueryParams(query : {[key: string] : string | boolean | number}) : Request {
+        this._req.query = {...this._req.query, ...query}
         return this 
+    }
+
+    /**
+     * Retrieve query string argument.
+     *
+     * @param {string} name Case-insensitive query string name
+     * @return {string | boolean | number}
+     */
+    public getQueryParam(name : string) : string | boolean | number {
+        return this._req.query[name] || null
+    } 
+
+    /**
+     * Retrieve request parameters
+     *
+     * @return {object}
+     */
+     public getParams() : {[key: string] : any} {
+        return this._req.params
+    }
+
+    /**
+     * Retrieve a single request parameter
+     *
+     * @param {string} name Case-insensitive parameter name
+     * @return {any}
+     */
+     public getParam(name : string) : any {
+        return this._req.params[name] || null
     } 
 
     /**
@@ -112,13 +142,14 @@ module.exports = class Request extends Message {
     /**
      * Return an instance with the specified body parameters.
      *
-     * @param null|array|object $data The deserialized body data. This will
+     * @param {object} data The deserialized body data. This will
      *     typically be in an array or object.
-     * @return static
+     * @return {this}
      * @throws \InvalidArgumentException if an unsupported argument type is
      *     provided.
      */
-    public withParsedBody(data : any) : Request {
+    public withParsedBody(data : {[key: string]: any}) : Request {
+        this._req.body = {...this._req.body, ...data}
         return this
     }
 
@@ -128,7 +159,7 @@ module.exports = class Request extends Message {
      * @return array Attributes derived from the request.
      */
     public getAttributes() : Array<any> {
-        return []
+        return JSON.parse(JSON.stringify(this._req))
     }
 
     /**
@@ -178,7 +209,8 @@ module.exports = class Request extends Message {
      * @return static
      */
     public withoutAttribute(name : string) : Request {
-
+        this._req[name] = null;
+        delete this._req[name];
         return this
     }
 
@@ -220,6 +252,8 @@ module.exports = class Request extends Message {
      * @throws \InvalidArgumentException for invalid HTTP methods.
      */
     public withMethod(method : string) : Request {
+        this._req.method = method;
+
         return this
     }
 
