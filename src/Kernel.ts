@@ -1,7 +1,7 @@
 import express  from 'express';
 const cookieParser = require('cookie-parser')
-const http = require('http')
 const cors = require('cors')
+import fs from 'fs'
 
 import { _route } from "../types/_router";
 import { _base } from "../types/_base";
@@ -29,7 +29,6 @@ module.exports = class Kernel {
  
     init() {
         const app : express.Application = express()
-        const server = http.Server(app)
         const models : { 
             sequelize: any,
             Op: any
@@ -47,7 +46,7 @@ module.exports = class Kernel {
         this.#initializeApp(app, models)
         
         const { port, host } = require(`${this.#PATH.CONFIG_DIR}/env`)
-        server.listen(port, host, async() => {
+        app.listen(port, host, async() => {
             await this.sync(models)
             console.log(`Le serveur a demarré sur l\'hôte http://${host}:${port}`)
         })
@@ -57,6 +56,13 @@ module.exports = class Kernel {
         const app_middlewares : Array<Function|string> = require(`${this.#PATH.CONFIG_DIR}/middlewares.js`)([])
         app.use(...Route.makeMiddlewares(this.#PATH, app_middlewares))
 
+        const wsRouterFile = `${this.#PATH.CONFIG_DIR}/routes.ws.js`
+        if (fs.existsSync(wsRouterFile)) {
+            const expressWs = require('express-ws')(app);
+            const wsRouter = require(wsRouterFile)(express.Router(), models)
+            app.use(wsRouter.path, wsRouter.router);
+        }
+        
         const router : _route.Router = require(`${this.#PATH.CONFIG_DIR}/routes.js`)(new Router(this.#PATH))
         const routes : {[key: string]: Array<_route.Route>} = router.getAllRoutes()
         for (let key in routes) {
