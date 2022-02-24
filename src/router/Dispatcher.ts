@@ -25,13 +25,13 @@ module.exports = class Dispatcher {
         this.#models = models
     }
 
-    dispatch(req : express.Request, res : express.Response, next : Function) : any {  
+    dispatch(io: any, req : express.Request, res : express.Response, next : Function) : any {  
         const URL : string = req.path
         if (false === this.#router.getAutoRoute()) {
             throw Error('Not routes found for this URL')
         }
         else {
-            return launcher(trim(URL, '/').split('/'), req, res, this.#path, this.#models, this.#router)
+            return launcher(trim(URL, '/').split('/'), req, res, this.#path, this.#models, io, this.#router)
         }
     }
 }

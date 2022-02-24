@@ -183,12 +183,12 @@ module.exports = class Route
         return this.#middlewares
     }
 
-    getRunner(models : {[key: string]: _db.BaseModel}, req : any, res : any, next : any) : any {
-        return this.#launch(models, req, res)
+    getRunner(models : {[key: string]: _db.BaseModel}, io : any, req : any, res : any, next : any) : any {
+        return this.#launch(models, io, req, res)
     }
 
 
-    #launch(models : {[key: string]: _db.BaseModel}, req : any, res : any) : Function {
+    #launch(models : {[key: string]: _db.BaseModel}, io : any, req : any, res : any) : Function {
         let params = this.#matches;
         
         params.push(...[req, res]);
@@ -196,7 +196,7 @@ module.exports = class Route
             return call_user_func_array(this.callable, [req, res]);
         }
 
-        return launcher(this.callable.split('@'), req, res, this.#PATH, models)
+        return launcher(this.callable.split('@'), req, res, this.#PATH, models, io)
     }
 
     /**

@@ -27,7 +27,7 @@ declare namespace _route {
         constructor(path : string, callable : string | Function, middlewares : string | Function | Array<string|Function>)
         setPATH(path : {[key: string]: string}) : Route
         getMiddlewares() : Array<Function>
-        getRunner(models : {[key: string]: _db.BaseModel}, req : express.Request, res : express.Response, next : Function) : Function
+        getRunner(models : {[key: string]: _db.BaseModel}, io : any, req : express.Request, res : express.Response, next : Function) : Function
 
         getPath() : string
         with(param : string, regex : string) : Route
@@ -38,7 +38,7 @@ declare namespace _route {
 
     class Dispatcher {
         constructor(path : {[key: string]: string}, models : {[key: string]: _db.BaseModel})
-        dispatch(req : express.Request, res : express.Response, next : Function) : any
+        dispatch(io: any, req : express.Request, res : express.Response, next : Function) : any
         launchAction(parts : Array<string>, req: express.Request, res: express.Response)
     }
 }

@@ -1,6 +1,7 @@
 import express  from 'express';
 const cookieParser = require('cookie-parser')
 const cors = require('cors')
+const http = require('http')
 import fs from 'fs'
 
 import { _route } from "../types/_router";
@@ -29,6 +30,7 @@ module.exports = class Kernel {
  
     init() {
         const app : express.Application = express()
+        const server = http.Server(app)
         const models : { 
             sequelize: any,
             Op: any
@@ -43,33 +45,36 @@ module.exports = class Kernel {
         app.use(express.urlencoded({ extended: true }))
         app.use(express.json({ limit: '250mb' }))
         
-        this.#initializeApp(app, models)
+        
+        const socketFile = `${this.#PATH.CONFIG_DIR}/socket.js`
+        let io = null
+        if (fs.existsSync(socketFile)) {
+            const socket = require(socketFile)
+            io = require('socket.io')(server, socket.options || {})
+            io = socket.handler(io, models)
+        }
+        this.#initializeApp(app, models, io)
         
         const { port, host } = require(`${this.#PATH.CONFIG_DIR}/env`)
-        app.listen(port, host, async() => {
+        server.listen(port, host, async() => {
             await this.sync(models)
             console.log(`Le serveur a demarré sur l\'hôte http://${host}:${port}`)
         })
     }
 
-    #initializeApp(app : any, models : {[key: string]: _db.BaseModel}) {
+    #initializeApp(app : any, models : {[key: string]: _db.BaseModel}, io : any) {
         const app_middlewares : Array<Function|string> = require(`${this.#PATH.CONFIG_DIR}/middlewares.js`)([])
-        app.use(...Route.makeMiddlewares(this.#PATH, app_middlewares))
-
-        const wsRouterFile = `${this.#PATH.CONFIG_DIR}/routes.ws.js`
-        if (fs.existsSync(wsRouterFile)) {
-            const expressWs = require('express-ws')(app);
-            const wsRouter = require(wsRouterFile)(express.Router(), models)
-            app.use(wsRouter.path, wsRouter.router);
+        const middlewares = Route.makeMiddlewares(this.#PATH, app_middlewares)
+        if (middlewares.length) {
+            app.use(...middlewares)
         }
-        
         const router : _route.Router = require(`${this.#PATH.CONFIG_DIR}/routes.js`)(new Router(this.#PATH))
         const routes : {[key: string]: Array<_route.Route>} = router.getAllRoutes()
         for (let key in routes) {
             routes[key].forEach(route => {
                 const middlewares : Function[] = route.getMiddlewares()
                 const runner : Function = function (req : express.Request, res : express.Response, next : Function) {
-                    return route.getRunner(models, req, res, next)
+                    return route.getRunner(models, io, req, res, next)
                 }
                 if (key == 'delete') {
                     app.delete(`/${route.getPath()}`, ...middlewares, runner)
@@ -90,7 +95,7 @@ module.exports = class Kernel {
         }
         const dispatcher : _route.Dispatcher = new Dispatcher(this.#PATH, models);
         app.use(function (req : express.Request, res : express.Response, next : Function) {
-            return dispatcher.dispatch(req, res, next)
+            return dispatcher.dispatch(io, req, res, next)
         })
     }
 

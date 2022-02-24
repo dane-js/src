@@ -14,6 +14,7 @@ module.exports = class BaseController
 
     protected request: _http.Request | null = null
     protected response: _http.Response | null = null
+    protected io: any | null = null
     
     protected db : {[key: string]: _db.BaseModel} = {}
     protected repo : {[key: string]: _db.BaseRepository} = {}
@@ -25,10 +26,12 @@ module.exports = class BaseController
     public async initialize(
         req : express.Request, 
         res : express.Response, 
-        models : {[key: string]: _db.BaseModel}
+        models : {[key: string]: _db.BaseModel},
+        io: any
     ): Promise<void> {
         this.request = new Request(req, res)
         this.response = new Response(req, res)
+        this.io = io
         
         this.#initDb(models)
         this.#initPlugins()
