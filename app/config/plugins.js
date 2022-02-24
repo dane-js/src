@@ -17,4 +17,12 @@ module.exports = {
      * `npm install ejs`
      */
     mail: false,
+
+    /**
+     * Active l'utilisation de l'outil d'upload des images
+     * 
+     * Necessite l'installation de base64-img
+     * `npm install base64-img`
+     */
+    upload: false,
 }

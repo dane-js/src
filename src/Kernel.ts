@@ -17,7 +17,7 @@ module.exports = class Kernel {
         STATIC_DIR     : '',
         CONFIG_DIR     : '',
         CONTROLLER_DIR : '',
-        MIDDLEWARES_DIR: '',
+        MIDDLEWARE_DIR: '',
         MODEL_DIR      : '',
         PLUGIN_DIR     : '',
         REPOSITORY_DIR : '',

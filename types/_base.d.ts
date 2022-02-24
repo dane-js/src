@@ -2,7 +2,7 @@ export declare namespace _base {
     type PATH = {
         CONFIG_DIR     : string,
         CONTROLLER_DIR : string,
-        MIDDLEWARES_DIR: string,
+        MIDDLEWARE_DIR: string,
         MODEL_DIR      : string,
         PLUGIN_DIR     : string,
         REPOSITORY_DIR : string,
