@@ -14,5 +14,6 @@ else if (env === 'test') {
 module.exports = {
     host,
     port,
+    basePath: '/',
     baseUrl
 }
