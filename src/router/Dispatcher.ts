@@ -26,11 +26,16 @@ module.exports = class Dispatcher {
     }
 
     dispatch(io: any, req : express.Request, res : express.Response, next : Function) : any {  
-        const URL : string = req.path
         if (false === this.#router.getAutoRoute()) {
             throw Error('Not routes found for this URL')
         }
         else {
+            let { basePath } = require(`${this.#path.CONFIG_DIR}/env`)
+            basePath = basePath || ''
+
+            const regex = new RegExp(`^\/?${basePath}`, 'i');
+            const URL : string = req.path.replace(regex, '')
+
             return launcher(trim(URL, '/').split('/'), req, res, this.#path, this.#models, io, this.#router)
         }
     }
