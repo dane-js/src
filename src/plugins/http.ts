@@ -4,7 +4,7 @@ const axios = require('axios')
  * Service de requetage HTTP
  * 
  * @param {object} config 
- * @use nodemailer
+ * @use axios
  * @returns 
  */
 module.exports = function(config : {
@@ -18,11 +18,7 @@ module.exports = function(config : {
     [key: string]: any
 }) {
     
-	const _axios = axios.create({
-        baseURL: config.baseURL,
-        timeout: config.timeout,
-        withCredentials: config.withCredentials,
-    });
+	const _axios = axios.create(config);
 
 	/**
 	 * Intercepteur de la requete
